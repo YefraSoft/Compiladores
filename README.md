@@ -1,15 +1,17 @@
 # Compiladores — Teoría de la Computación
 
 Implementaciones en **C++** de tres problemas clásicos de **Teoría de la Computación**
-(formales, autómatas y gramáticas), desarrolladas durante el curso.
+(formales, autómatas y gramáticas), desarrolladas durante el curso. La migración a
+**Rust** está en curso bajo `rust/` y va por delante del proyecto de autómatas.
 
 | | |
 |---|---|
 | **Autor** | Eduardo Efraín García Suárez |
 | **Curso** | Teoría de la Computación |
-| **Lenguaje** | C++ (C++17) |
+| **Lenguaje** | C++ (C++17) · Rust (edition 2024) |
 | **Fecha** | 2024 |
 | **Estado** | 🔴 **Código legacy** — se conserva tal cual, sin refactorizar |
+| **Migración** | 🟡 **En curso** — `rust/AFD/` reescribe el autómata; CYK y OCL siguen solo en C++ |
 
 > [!WARNING]
 > **Código legacy.** Este repositorio es un archivo histórico: el código se sube
@@ -26,6 +28,7 @@ Implementaciones en **C++** de tres problemas clásicos de **Teoría de la Compu
 | **Algoritmo CYK** | `cpp/CYK/` | Prueba de pertenencia a gramáticas libres de contexto en **FNC** |
 | **Autómata de números reales** | `cpp/AFD/` | **DFA** que reconoce literales numéricos en notación científica |
 | **Operaciones con lenguajes** | `cpp/OCL/` | Generación aleatoria de conjuntos de cadenas y operaciones de conjuntos |
+| **Autómata (Rust)** | `rust/AFD/` | Reescritura en curso del DFA de `cpp/AFD/`. `src/main.rs` aún no invoca el módulo |
 
 ---
 
@@ -63,6 +66,26 @@ make -C cpp all STD=c++20 CXX=clang++
 Los binarios y objetos se generan en `cpp/<proyecto>/build/` y quedan fuera del control
 de versiones. Los `.d` (`-MMD -MP`) permiten recompilar solo lo que cambió al tocar
 un `.h`.
+
+### Rust
+
+El código en Rust es un crate de Cargo y se compila con `cargo`, sin `Makefile`:
+
+```bash
+cd rust/AFD
+cargo run            # compila y ejecuta
+cargo build --release
+cargo test           # todavía no hay pruebas escritas
+```
+
+Equivalente sin cambiar de carpeta:
+
+```bash
+cargo run --manifest-path rust/AFD/Cargo.toml
+```
+
+Cargo deja los binarios en `rust/AFD/target/`, que está excluido por `.gitignore`. Se
+versiona `Cargo.lock` (crate binario) para que las versiones de `regex` queden fijadas.
 
 ---
 
@@ -247,6 +270,15 @@ Compiladores/
         ├── operationsStrings.cpp
         ├── opwLanguages.cpp               # Orquestación de las operaciones
         └── build/                         # Generado: ocl, *.o, *.d
+└── rust/
+    └── AFD/
+        ├── Cargo.toml                     # Manifiesto del crate (AFD)
+        ├── Cargo.lock                     # Dependencias fijadas (regex)
+        ├── src/
+        │   ├── main.rs                    # Punto de entrada (aún sin usar)
+        │   └── Afd/
+        │       └── Afd.rs                 # Módulo afd: construcción del DFA
+        └── target/                        # Generado: cargo build
 ```
 
 ---
@@ -289,9 +321,16 @@ aparecen advertencias, ninguna bloquea el build:
 
 ## Notas
 
-- El repositorio contiene **únicamente código fuente** (`.cpp` / `.h`) y los `Makefile`.
-  Los `.zip` de respaldo, los proyectos de Visual Studio (`.vcxproj`) y los binarios de
-  compilación (`.obj`, `.pdb`, `.ilk`, `x64/`) están excluidos por `.gitignore`.
+- El repositorio contiene **únicamente código fuente** (`.cpp` / `.h` / `.rs`), los
+  `Makefile` y los manifiestos de Cargo (`Cargo.toml`, `Cargo.lock`).
+  Los `.zip` de respaldo, los proyectos de Visual Studio (`.vcxproj`), los binarios de
+  compilación (`.obj`, `.pdb`, `.ilk`, `x64/`) y las carpetas `build/` y `target/` están
+  excluidos por `.gitignore`.
+- La migración a Rust **no está terminada**: `rust/AFD/src/main.rs` sigue con el
+  `Hello, world!` de `cargo new` y no declara `mod`, así que `src/Afd/Afd.rs` todavía no
+  se compila. La carpeta y el módulo se llaman `Afd`, donde Rust espera `snake_case`
+  (`mod afd;` con `src/afd/afd.rs`); los nombres se dejan tal cual para no alterar el
+  código en curso.
 - No hay sistema de pruebas automatizadas. Cada proyecto se valida ejecutándolo
   manualmente; los tres tienen un `main()` independiente, por lo que **no se pueden
   compilar juntos** en un mismo binario.

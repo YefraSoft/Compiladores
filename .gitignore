@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------
-# Este repositorio solo versiona codigo fuente de C++.
-# Todo lo demas (binarios, proyectos de Visual Studio, respaldos .zip) queda
-# fuera del control de versiones.
+# Este repositorio solo versiona codigo fuente de C++ y de Rust.
+# Todo lo demas (binarios, artefactos de compilacion, proyectos de Visual
+# Studio, respaldos .zip) queda fuera del control de versiones.
 # ---------------------------------------------------------------------------
 
 # Ignorar todo por defecto
 *
 
-# ...y volver a incluir unicamente el codigo fuente de C++ y la documentacion
+# ...y volver a incluir unicamente el codigo fuente y la documentacion
 !*.cpp
 !*.h
 !*.c
@@ -25,6 +25,18 @@
 !**/*.mk
 !**/CMakeLists.txt
 
+# Codigo fuente de Rust y sus manifiestos (Cargo)
+!*.rs
+!**/*.rs
+!Cargo.toml
+!**/Cargo.toml
+!Cargo.lock
+!**/Cargo.lock
+!rust-toolchain
+!rust-toolchain.toml
+!*.ron
+!**/*.ron
+
 # Necesario para poder re-incluir archivos dentro de carpetas ignoradas
 !*/
 
@@ -32,6 +44,7 @@
 # Salida de compilacion
 # ---------------------------------------------------------------------------
 build/
+target/
 
 
 # ---------------------------------------------------------------------------
