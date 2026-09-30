@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <map>
 
@@ -8,7 +9,7 @@ private:
     typedef std::map<unsigned, event> transition;
     transition delta;
     int startState = 0;
-    bool finalStates[8];
+    bool finalStates[8]{};
 
     void zeroToNineEvents(int, int, transition &);
 
