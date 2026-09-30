@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------------------
+# Este repositorio solo versiona codigo fuente de C++.
+# Todo lo demas (binarios, proyectos de Visual Studio, respaldos .zip) queda
+# fuera del control de versiones.
+# ---------------------------------------------------------------------------
+
+# Ignorar todo por defecto
+*
+
+# ...y volver a incluir unicamente el codigo fuente de C++ y la documentacion
+!*.cpp
+!*.h
+!*.c
+!**/*.cpp
+!**/*.h
+!**/*.c
+!*.gitignore
+!*.md
+
+# Necesario para poder re-incluir archivos dentro de carpetas ignoradas
+!*/
+
+# ---------------------------------------------------------------------------
+# Reforzar exclusiones explicitas
+# ---------------------------------------------------------------------------
+
+# Artefactos de compilacion
+*.exe
+*.out
+*.dll
+*.so
+*.a
+*.lib
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+*.exp
+
+# Resultados de compilacion de MSBuild / Visual Studio
+*.tlog
+*.recipe
+*.log
+x64/
+Debug/
+Release/
+*.user
+
+# Proyectos y soluciones de Visual Studio
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcproj
+*.filters
+
+# Respaldos comprimidos (el codigo ya vive en las carpetas de este repo)
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Configuracion de editores / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
