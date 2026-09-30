@@ -17,8 +17,22 @@
 !*.gitignore
 !*.md
 
+# Archivos de sistema de compilacion (Makefiles, CMake, Ninja)
+!Makefile
+!*.mk
+!CMakeLists.txt
+!**/Makefile
+!**/*.mk
+!**/CMakeLists.txt
+
 # Necesario para poder re-incluir archivos dentro de carpetas ignoradas
 !*/
+
+# ---------------------------------------------------------------------------
+# Salida de compilacion
+# ---------------------------------------------------------------------------
+build/
+
 
 # ---------------------------------------------------------------------------
 # Reforzar exclusiones explicitas

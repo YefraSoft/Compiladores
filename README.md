@@ -7,7 +7,7 @@ Implementaciones en **C++** de tres problemas clásicos de **Teoría de la Compu
 |---|---|
 | **Autor** | Eduardo Efraín García Suárez |
 | **Curso** | Teoría de la Computación |
-| **Lenguaje** | C++ (C++17 / C++20) |
+| **Lenguaje** | C++ (C++17) |
 | **Fecha** | 2024 |
 | **Estado** | 🔴 **Código legacy** — se conserva tal cual, sin refactorizar |
 
@@ -23,9 +23,46 @@ Implementaciones en **C++** de tres problemas clásicos de **Teoría de la Compu
 
 | Proyecto | Carpeta | Descripción |
 |---|---|---|
-| **Algoritmo CYK** | `Prueba_de_Membresia/`, `prueba_De_Membresia-Efrain_Garcia/CYK/` | Prueba de pertenencia a gramáticas libres de contexto en **FNC** |
-| **Autómata de números reales** | `rSistem/` | **DFA** que reconoce literales numéricos en notación científica |
-| **Operaciones con lenguajes** | `tests/` | Generación aleatoria de conjuntos de cadenas y operaciones de conjuntos |
+| **Algoritmo CYK** | `cpp/CYK/` | Prueba de pertenencia a gramáticas libres de contexto en **FNC** |
+| **Autómata de números reales** | `cpp/AFD/` | **DFA** que reconoce literales numéricos en notación científica |
+| **Operaciones con lenguajes** | `cpp/OCL/` | Generación aleatoria de conjuntos de cadenas y operaciones de conjuntos |
+
+---
+
+## Compilar y ejecutar
+
+Todo el código C++ vive bajo `cpp/`. Hay un `Makefile` raíz y uno por proyecto.
+
+```bash
+make -C cpp            # compila los tres proyectos
+make -C cpp help       # lista todos los objetivos
+```
+
+| Objetivo | Efecto |
+|---|---|
+| `make -C cpp` | compila CYK, AFD y OCL |
+| `make -C cpp run` | ejecuta los tres en orden (consume `stdin`) |
+| `make -C cpp build-<P>` | compila un proyecto: `CYK`, `AFD`, `OCL` |
+| `make -C cpp run-<P>` | ejecuta un proyecto |
+| `make -C cpp clean` | borra los artefactos de los tres |
+| `make -C cpp distclean` | `clean` + borra `cpp/build/` |
+
+Cada proyecto también se compila de forma independiente desde su carpeta:
+
+```bash
+cd cpp/CYK && make && make run
+```
+
+Variables de configuración: `CXX` (por defecto `g++`), `STD` (por defecto `c++17`),
+`CXXFLAGS` (por defecto `-std=$(STD) -Wall -Wextra -O2`).
+
+```bash
+make -C cpp all STD=c++20 CXX=clang++
+```
+
+Los binarios y objetos se generan en `cpp/<proyecto>/build/` y quedan fuera del control
+de versiones. Los `.d` (`-MMD -MP`) permiten recompilar solo lo que cambió al tocar
+un `.h`.
 
 ---
 
@@ -57,47 +94,47 @@ La gramática en FNC queda hardcodeada en `main()`, y la tabla de CYK se represe
 ### Compilar y ejecutar
 
 ```bash
-cd Prueba_de_Membresia
-g++ -std=c++17 main.cpp -o cyk
-./cyk
+make -C cpp run-CYK
 ```
 
 ### Ejemplo
 
 ```text
-$ ./cyk
-1+2*3
+$ make -C cpp run-CYK
+n+n
 Alcanzable
 
-$ ./cyk
+$ make -C cpp run-CYK
 ???
 Inalcanzable
 ```
 
-### Nota sobre las carpetas duplicadas
-
-`Prueba_de_Membresia/` y `prueba_De_Membresia-Efrain_Garcia/CYK/` contienen **copias
-idénticas** del mismo `main.cpp` (difieren únicamente en los finales de línea: CRLF vs LF).
-Ambas se conservan porque el repositorio es un archivo del estado original.
+> [!NOTE]
+> Este proyecto vivía duplicado en `Prueba_de_Membresia/` y
+> `prueba_De_Membresia-Efrain_Garcia/CYK/`, con un `main.cpp` **idéntico** en ambas
+> (solo cambiaban los finales de línea: CRLF vs LF). Se conservó una sola copia en
+> `cpp/CYK/` y se eliminó el duplicado.
 
 ---
 
-## 2. Autómata finito para números reales (`rSistem`)
+## 2. Autómata finito para números reales (`cpp/AFD`)
 
 Implementa un **autómata finito determinista (DFA)** de 8 estados que reconoce
 números reales en notación científica:
 
 ```text
 34.9        → reconocida
-0E-43       → reconocida
 0.43e+4     → reconocida
 3.1416      → reconocida
+1.5e10      → reconocida
+12          → reconocida
+0E-43       → rechazada   (ver "Defectos conocidos")
 3..1416     → rechazada
 01416       → rechazada
 Hola mundo  → rechazada
 ```
 
-**Estructura de la clase `automaton`** (`rSistem/class/automaton.h`):
+**Estructura de la clase `automaton`** (`cpp/AFD/class/automaton.h`):
 
 ```cpp
 typedef std::map<char, unsigned>    event;      // símbolo  -> estado destino
@@ -114,21 +151,19 @@ solo si el estado final alcanzado es de aceptación.
 ### Compilar y ejecutar
 
 ```bash
-cd rSistem
-g++ -std=c++17 main.cpp class/automaton.cpp -o rsystem
-./rsystem
+make -C cpp run-AFD
 ```
 
 ### Ejemplo
 
 ```text
-$ ./rsystem
+$ make -C cpp run-AFD
 :> 4
 34.9
-0E-43
+0.43e+4
 3..1416
 Hola
-Cadenas reconocidas: [ 0E-43 34.9 ]
+Cadenas reconocidas: [ 34.9 0.43e+4 ]
 Cadenas rechazadas: [ 3..1416 Hola ]
 ```
 
@@ -138,7 +173,7 @@ Cadenas rechazadas: [ 3..1416 Hola ]
 
 ---
 
-## 3. Operaciones con lenguajes (`tests`)
+## 3. Operaciones con lenguajes (`cpp/OCL`)
 
 Genera **aleatoriamente** conjuntos de cadenas sobre un alfabeto y calcula las
 operaciones clásicas entre lenguajes.
@@ -152,17 +187,16 @@ operaciones clásicas entre lenguajes.
 
 ### Compilar y ejecutar
 
-Requiere **C++20** por las fold expressions.
+Las *fold expressions* de C++17 son suficientes; no hace falta C++20.
 
 ```bash
-cd tests
-g++ -std=c++20 main.cpp Funtions.cpp operationsStrings.cpp opwLanguages.cpp -o tests
-./tests
+make -C cpp run-OCL
 ```
 
 ### Ejemplo
 
 ```text
+$ make -C cpp run-OCL
 Enter the length of the string set: 5
 Enter a string lengt: 4
 Enter a string pow: 2
@@ -191,23 +225,28 @@ B power 2: [ bcbc bccb ... ]
 Compiladores/
 ├── .gitignore
 ├── README.md
-├── Prueba_de_Membresia/
-│   └── main.cpp                          # Algoritmo CYK (copia 1)
-├── prueba_De_Membresia-Efrain_Garcia/
-│   └── CYK/
-│       └── main.cpp                      # Algoritmo CYK (copia 2, idéntica)
-├── rSistem/
-│   ├── main.cpp                          # Programa principal
-│   └── class/
-│       ├── automaton.h                   # Clase automaton (declaración)
-│       └── automaton.cpp                 # Clase automaton (implementación)
-└── tests/
-    ├── main.cpp                          # Menú principal
-    ├── Funtions.h                        # Entrada del usuario e impresión
-    ├── Funtions.cpp
-    ├── operationsStrings.h               # Generación aleatoria y operaciones
-    ├── operationsStrings.cpp
-    └── opwLanguages.cpp                 # Orquestación de las operaciones
+└── cpp/
+    ├── Makefile                           # Coordina los tres proyectos
+    ├── CYK/
+    │   ├── Makefile
+    │   ├── main.cpp                       # Algoritmo CYK
+    │   └── build/                         # Generado: cyk, *.o, *.d
+    ├── AFD/
+    │   ├── Makefile
+    │   ├── main.cpp                       # Programa principal
+    │   ├── class/
+    │   │   ├── automaton.h                # Clase automaton (declaración)
+    │   │   └── automaton.cpp              # Clase automaton (implementación)
+    │   └── build/                         # Generado: afd, *.o, *.d
+    └── OCL/
+        ├── Makefile
+        ├── main.cpp                       # Menú principal
+        ├── Funtions.h                     # Entrada del usuario e impresión
+        ├── Funtions.cpp
+        ├── operationsStrings.h            # Generación aleatoria y operaciones
+        ├── operationsStrings.cpp
+        ├── opwLanguages.cpp               # Orquestación de las operaciones
+        └── build/                         # Generado: ocl, *.o, *.d
 ```
 
 ---
@@ -216,24 +255,45 @@ Compiladores/
 
 No se corrigen a propósito: el repositorio preserva el código original.
 
+### Compilación
+
+Todos los proyectos compilan sin errores con `g++ -std=c++17 -Wall -Wextra`. Solo
+aparecen advertencias, ninguna bloquea el build:
+
+| Ubicación | Advertencia |
+|---|---|
+| `cpp/CYK/main.cpp:8` | `-Wnon-c-typedef-for-linkage`: `produ` es un `struct` anónimo con inicializadores por defecto, renombrado vía `typedef`. |
+| `cpp/CYK/main.cpp:148` | `-Wunused-variable`: `prod` no se usa en el `for`. |
+| `cpp/OCL/Funtions.cpp:19` | `-Wunused-parameter`: `usePow` no se usa en `userImputs(OperationStrings&, bool)`. |
+
+### Lógica
+
 | Ubicación | Detalle |
 |---|---|
-| `automaton.h` | `bool finalStates[8];` no se inicializa; el constructor solo marca `1, 2, 4, 7` como finales. Los índices `0, 3, 5, 6` quedan **indeterminados**, lo que es comportamiento indefinido. Una entrada como `3.` termina en el estado 3 y lee memoria sin inicializar. |
-| `automaton.cpp` | `fori()` itera con `i < 5`, por lo que solo recorre los estados `0`-`4` de los 8 existentes. El método tampoco se invoca desde `main()`. |
-| `rSistem/main.cpp` | Usa `string` sin incluir `<string>`; compila gracias a los includes transitivos de `automaton.h`. |
-| `tests/main.cpp` | `Funtions::languageOperations()` se ejecuta **antes** del bucle del menú, así que la opción `1` solo limpia la pantalla y la opción `2` repite el cálculo. |
-| `tests/*.h` | Nombre de la clase `Funtions` con `t` (debería ser `Functions`), igual que `opwLanguages.cpp`. Nombres heredados, conservados. |
-| `Prueba_de_Membresia/main.cpp` | La gramática y el símbolo de inicio (`T` = 84) están hardcodeados; `printCYKTable()` quedó comentado. |
-| Codificación | Los archivos mezcla finales de línea **CRLF y LF**, y los originales incluían `README.md` en **UTF-16** e ISO-8859-1 en algunos `.cpp`. Se preserva tal cual. |
+| `cpp/CYK/main.cpp:139` | Usa `\|\|` donde CYK exige `&&`. Con `\|\|` basta con que **uno** de los dos rangos contenga el no-terminal, así que se insertan no-terminales de más. Debería comprobar que el hijo izquierdo **y** el derecho derivan `prod.G3`. |
+| `cpp/CYK/main.cpp:150` | Valida el símbolo inicial `1084` (`T`), pero el axioma de la gramática es `Q` = `1081`. |
+| `cpp/CYK/main.cpp:148` | El `for` que envuelve la comprobación final es redundante: `count(1084)` no depende de `prod`. |
+| `cpp/CYK/main.cpp:119,150` | Con entrada vacía, `n == 0` y se indexa `virTable[0][-1]`: comportamiento indefinido. |
+| `cpp/OCL/main.cpp:52` | El menú **no tiene forma de salir**: el bucle es `while (option != 0)` pero el `switch` no incluye `case 0`, así que la opción `0` cae al `default`, que fija `option = -1`. Al agotarse `stdin`, `cin >> option` deja `option` en `0` y el programa entra en bucle infinito. |
+| `cpp/OCL/main.cpp:25` | `languageOperations()` se ejecuta **antes** del bucle del menú, así que la opción `1` solo limpia la pantalla y la opción `2` repite el cálculo. |
+| `cpp/OCL/operationsStrings.cpp:7-11` | Al generar una cadena vacía se inserta `<void>` **y** también `""`, por lo que ambos aparecen en el conjunto. |
+| `cpp/AFD/class/automaton.h:11` | `bool finalStates[8];` no se inicializa; el constructor solo marca `1, 2, 4, 7` como finales. Los índices `0, 3, 5, 6` quedan **indeterminados**, lo que es comportamiento indefinido. Una entrada como `3.` termina en el estado 3 y lee memoria sin inicializar. |
+| `cpp/AFD/class/automaton.cpp:5-18` | El DFA **no admite exponente sin punto decimal**: desde el estado 2 (parte entera) la única salida es `.`, por lo que `0E-43` y `1e5` se rechazan, aunque el README original los daba por reconocidos. |
+| `cpp/AFD/class/automaton.cpp:28` | `fori()` itera con `i < 5`, por lo que solo recorre los estados `0`-`4` de los 8 existentes. El método tampoco se invoca desde `main()`. |
+| `cpp/AFD/main.cpp:1` | Usa `string` sin incluir `<string>`; compila gracias a los includes transitivos de `automaton.h`. |
+| `cpp/OCL/*.h` | Nombre de la clase `Funtions` con `t` (debería ser `Functions`), igual que `opwLanguages.cpp`. Nombres heredados, conservados. |
+| `cpp/CYK/main.cpp:43-107` | La gramática y el símbolo de inicio están hardcodeados; `printCYKTable()` quedó comentado. |
+| Codificación | Los archivos mezcla finales de línea **CRLF y LF**, y algunos `.cpp` originales estaban en ISO-8859-1. Se preserva tal cual. |
 
 ---
 
 ## Notas
 
-- El repositorio contiene **únicamente código fuente** (`.cpp` / `.h`). Los `.zip`
-  de respaldo, los proyectos de Visual Studio (`.vcxproj`) y los binarios de
+- El repositorio contiene **únicamente código fuente** (`.cpp` / `.h`) y los `Makefile`.
+  Los `.zip` de respaldo, los proyectos de Visual Studio (`.vcxproj`) y los binarios de
   compilación (`.obj`, `.pdb`, `.ilk`, `x64/`) están excluidos por `.gitignore`.
-- No hay sistema de pruebas automatizadas ni archivos `CMakeLists.txt` /
-  `Makefile`: cada proyecto se compila manualmente con los comandos indicados arriba.
-- Los tres proyectos tienen un `main()` independiente, por lo que **no se pueden
-  compilar juntos**; hay que compilar y ejecutar uno por uno.
+- No hay sistema de pruebas automatizadas. Cada proyecto se valida ejecutándolo
+  manualmente; los tres tienen un `main()` independiente, por lo que **no se pueden
+  compilar juntos** en un mismo binario.
+- Las carpetas se movieron con `git mv` para conservar el historial: las versiones
+  originales eran `Prueba_de_Membresia/`, `rSistem/` y `tests/`.
