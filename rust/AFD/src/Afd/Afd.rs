@@ -20,19 +20,11 @@ pub fn create(lines: &[String]) -> Result<Afd, String> {
         Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+./-] > [qQ][0-9]+[sf]{0,2}$").unwrap();
 
     let mut counter: StatesCounter = HashMap::new();
-    let mut lines_counter: i8 = 0;
     let mut afd: Afd = HashMap::new();
-    let mut has_s_state = false;
-    let mut has_f_state = false;
 
-    for line in lines {
-        lines_counter += 1;
-
+    for (i, line) in lines.iter().enumerate() {
         if !valid_line.is_match(line) {
-            return Err(format!(
-                "Syntax Error in line: {} value: {}",
-                lines_counter, line
-            ));
+            return Err(format!("Syntax Error in line: {} value: {}", i, line));
         }
 
         let sections: Vec<&str> = line.split_whitespace().collect();
@@ -40,33 +32,14 @@ pub fn create(lines: &[String]) -> Result<Afd, String> {
         let from_state = build_state(sections[0])?;
         let event = sections[2].chars().next().ok_or("Empty transition event")?;
         let to_state = build_state(sections[4])?;
-
-        if !has_s_state {
-            if from_state.is_start && to_state.is_start {
-                Err("Invalid transition state".to_string())?;
-            } else if from_state.is_start || to_state.is_start {
-                has_s_state = true;
-            }
-        } else if has_f_state {
-            if from_state.is_start || to_state.is_start {
-                Err("Invalid transition state".to_string())?;
-            }
-        }
-
-        if !has_f_state {
-            if from_state.is_final || to_state.is_final {
-                has_f_state = true;
-            }
-        }
-
         let from_name = from_state.name.clone();
 
         afd.entry(from_state).or_default().insert(event, to_state);
         *counter.entry(from_name).or_insert(0) += 1;
     }
 
-    if !has_f_state {
-        Err("Don't have a final state".to_string())?;
+    if afd.keys().filter(|state| state.is_start).count() > 1 {
+        return Err("More than one start state.".to_string());
     }
 
     Ok(afd)
