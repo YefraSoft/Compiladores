@@ -1,7 +1,7 @@
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub struct State {
     name: String,
     is_final: bool,
@@ -13,14 +13,19 @@ pub struct State {
 */
 
 pub type Afd = HashMap<State, HashMap<char, State>>;
-type StatesCounter = HashMap<String, i8>;
+
+struct Transition {
+    from_name: String,
+    event: char,
+    to_name: String,
+}
 
 pub fn create(lines: &[String]) -> Result<Afd, String> {
     let valid_line =
         Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+./-] > [qQ][0-9]+[sf]{0,2}$").unwrap();
 
-    let mut counter: StatesCounter = HashMap::new();
-    let mut afd: Afd = HashMap::new();
+    let mut states: HashMap<String, State> = HashMap::new();
+    let mut transitions: Vec<Transition> = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
         if !valid_line.is_match(line) {
@@ -32,38 +37,91 @@ pub fn create(lines: &[String]) -> Result<Afd, String> {
         let from_state = build_state(sections[0])?;
         let event = sections[2].chars().next().ok_or("Empty transition event")?;
         let to_state = build_state(sections[4])?;
-        let from_name = from_state.name.clone();
 
-        afd.entry(from_state).or_default().insert(event, to_state);
-        *counter.entry(from_name).or_insert(0) += 1;
+        let from_name = from_state.name.clone();
+        let to_name = to_state.name.clone();
+
+        register_state(&mut states, from_state);
+        register_state(&mut states, to_state);
+        transitions.push(Transition {
+            from_name,
+            event,
+            to_name,
+        });
     }
 
-    if afd.keys().filter(|state| state.is_start).count() > 1 {
-        return Err("More than one start state.".to_string());
+    check_rules(&states)?;
+
+    let mut afd: Afd = HashMap::new();
+
+    for state in states.values() {
+        afd.entry(state.clone()).or_default();
+    }
+
+    for transition in transitions {
+        let from_state = states
+            .get(&transition.from_name)
+            .ok_or("Invalid transition state")?
+            .clone();
+        let to_state = states
+            .get(&transition.to_name)
+            .ok_or("Invalid transition state")?
+            .clone();
+        let state_transitions = afd.entry(from_state).or_default();
+
+        if state_transitions.contains_key(&transition.event) {
+            return Err("Non deterministic transition.".to_string());
+        }
+
+        state_transitions.insert(transition.event, to_state);
     }
 
     Ok(afd)
+}
+
+fn register_state(states: &mut HashMap<String, State>, state: State) {
+    states
+        .entry(state.name.clone())
+        .and_modify(|known_state| {
+            known_state.is_final |= state.is_final;
+            known_state.is_start |= state.is_start;
+        })
+        .or_insert(state);
+}
+
+fn check_rules(states: &HashMap<String, State>) -> Result<(), String> {
+    let start_states = states.values().filter(|state| state.is_start).count();
+
+    if start_states == 0 {
+        return Err("Afd dont have a start state.".to_string());
+    }
+
+    if start_states > 1 {
+        return Err("More than one start state.".to_string());
+    }
+
+    Ok(())
 }
 
 pub fn check(afd: &Afd, line: &String) -> Result<bool, String> {
     let mut state = afd
         .keys()
         .find(|state| state.is_start)
-        .ok_or_else(|| "Afd dont have a final state".to_string())?;
+        .ok_or_else(|| "Afd dont have a start state.".to_string())?;
 
     for character in line.chars() {
-        match afd.get(state) {
-            Some(states) => {
-                if states.contains_key(&character) {
-                    state = &states[&character];
-                }
-            }
-            None => {
-                return Err(format!("Unknown character {}", character));
-            }
-        }
+        let Some(states) = afd.get(state) else {
+            return Ok(false);
+        };
+
+        let Some(next_state) = states.get(&character) else {
+            return Ok(false);
+        };
+
+        state = next_state;
     }
-    if state.is_final { Ok(true) } else { Ok(false) }
+
+    Ok(state.is_final)
 }
 
 fn build_state(state: &str) -> Result<State, String> {

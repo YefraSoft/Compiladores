@@ -6,8 +6,8 @@ use std::{env, fs, process};
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let Some(input) = args.get(1) else {
-        eprintln!("Uso: cargo run -- <archivo.yeff>");
+    let (Some(input), Some(line)) = (args.get(1), args.get(2)) else {
+        eprintln!("Uso: cargo run -- <archivo.yeff> <cadena>");
         process::exit(1);
     };
 
@@ -35,4 +35,13 @@ fn main() {
     };
 
     afd::print_afd(&afd);
+
+    match afd::check(&afd, line) {
+        Ok(true) => println!("Cadena aceptada."),
+        Ok(false) => println!("Cadena rechazada."),
+        Err(error) => {
+            eprintln!("Error: {error}");
+            process::exit(1);
+        }
+    }
 }
