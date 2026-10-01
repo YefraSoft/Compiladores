@@ -15,8 +15,9 @@ pub struct State {
 pub type Afd = HashMap<State, HashMap<char, State>>;
 type StatesCounter = HashMap<String, i8>;
 
-pub fn create(lines: &HashSet<String>) -> Result<Afd, String> {
-    let valid_line = Regex::new(r"^[qQ][0-9]+s?f? - [a-zA-Z0-9+./-] > [qQ][0-9]+s?f?$").unwrap();
+pub fn create(lines: &[String]) -> Result<Afd, String> {
+    let valid_line =
+        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+./-] > [qQ][0-9]+[sf]{0,2}$").unwrap();
 
     let mut counter: StatesCounter = HashMap::new();
     let mut lines_counter: i8 = 0;
@@ -28,7 +29,10 @@ pub fn create(lines: &HashSet<String>) -> Result<Afd, String> {
         lines_counter += 1;
 
         if !valid_line.is_match(line) {
-            return Err(format!("Syntax Error in line: {} value: {}", lines_counter, line));
+            return Err(format!(
+                "Syntax Error in line: {} value: {}",
+                lines_counter, line
+            ));
         }
 
         let sections: Vec<&str> = line.split_whitespace().collect();
@@ -57,10 +61,7 @@ pub fn create(lines: &HashSet<String>) -> Result<Afd, String> {
 
         let from_name = from_state.name.clone();
 
-        // Agrega la transición:
         afd.entry(from_state).or_default().insert(event, to_state);
-
-        // Cuenta cuántas transiciones salen de este estado
         *counter.entry(from_name).or_insert(0) += 1;
     }
 
@@ -98,13 +99,10 @@ fn build_state(state: &str) -> Result<State, String> {
     let mut is_start = false;
 
     for c in state.chars() {
-        if c == 's' {
-            is_start = true;
-        }
-        if c == 'f' {
-            is_final = true;
-        } else {
-            name.push(c);
+        match c {
+            's' => is_start = true,
+            'f' => is_final = true,
+            _ => name.push(c),
         }
     }
 
