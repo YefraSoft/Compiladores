@@ -9,6 +9,24 @@ pub struct State {
     label: Option<String>,
 }
 
+impl State {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn is_final(&self) -> bool {
+        self.is_final
+    }
+
+    pub fn is_start(&self) -> bool {
+        self.is_start
+    }
+
+    pub fn label(&self) -> Option<&str> {
+        self.label.as_deref()
+    }
+}
+
 /*
     restructura de trasitions, ya que sobre escribia la misma
 */
@@ -140,16 +158,10 @@ pub fn check(afd: &Afd, line: &str) -> Result<bool, String> {
     Ok(state.is_final)
 }
 
-pub fn check_per_character(afd: &Afd, value: &char, state: &State) -> Result<State, String> {
-    let Some(states) = afd.get(state) else {
-        return Err("State not found".to_string());
-    };
+pub fn check_per_character(afd: &Afd, state: &State, value: char) -> Result<Option<State>, String> {
+    let states = afd.get(state).ok_or("State not found")?;
 
-    let Some(next_state) = states.get(&value) else {
-        return Err("null".to_string());
-    };
-
-    Ok(next_state.clone())
+    Ok(states.get(&value).cloned())
 }
 
 fn build_state(state: &str, label: Option<&str>) -> Result<State, String> {
