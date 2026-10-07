@@ -6,7 +6,7 @@
 
 Implementa un analizador léxico (scanner) para el siguiente diagrama de estados, puedes utilizar el lenguaje de programación de tu preferencia y utilizar la estrategia que decidas para su implementación. La solución que implementes es exactamente este diagrama, no añadas reglas adicionales, sigue la especificación.  
    
-Clases de tokens son los estados finales en la imagen, la etiqueta muestra el nombre del token e indica si para detectar su patrón utilizó un  símbolo adicional marcándolo con \*.  En la impresión ignoramos los tokens de espacio.
+Clases de tokens son los estados finales en la imagen, la etiquette muestra el nombre del token e indica si para detectar su patrón utilizó un  símbolo adicional marcándolo con \*.  En la impresión ignoramos los tokens de espacio.
 
 ## 
 

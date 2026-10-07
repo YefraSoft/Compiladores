@@ -41,7 +41,7 @@ struct Transition {
 
 pub fn create(lines: &[String]) -> Result<Afd, String> {
     let valid_line =
-        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+.*/=();:%!&|,_~-] > [qQ][0-9]+[sf]{0,2}( <[a-zA-Z]+>)?$")
+        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+.*/-] > [qQ][0-9]+[sf]{0,2}( <[a-zA-Z]+>)?$")
             .unwrap();
 
     let mut states: HashMap<String, State> = HashMap::new();

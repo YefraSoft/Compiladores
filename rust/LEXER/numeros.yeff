@@ -1,0 +1,80 @@
+# AFD de prueba: enteros, flotantes y exponentes.
+# Reconstruye el diagrama que implican los ejemplos de la consigna.
+# Sustituir por el .yeff real del diagrama.
+
+# --- entero: un solo digito ya es final ---
+q0s - 0 > q1f <entero>
+q0s - 1 > q1f <entero>
+q0s - 2 > q1f <entero>
+q0s - 3 > q1f <entero>
+q0s - 4 > q1f <entero>
+q0s - 5 > q1f <entero>
+q0s - 6 > q1f <entero>
+q0s - 7 > q1f <entero>
+q0s - 8 > q1f <entero>
+q0s - 9 > q1f <entero>
+q1f - 0 > q1f <entero>
+q1f - 1 > q1f <entero>
+q1f - 2 > q1f <entero>
+q1f - 3 > q1f <entero>
+q1f - 4 > q1f <entero>
+q1f - 5 > q1f <entero>
+q1f - 6 > q1f <entero>
+q1f - 7 > q1f <entero>
+q1f - 8 > q1f <entero>
+q1f - 9 > q1f <entero>
+
+# --- flotante: entero punto digito ---
+q1f - . > q2
+q2 - 0 > q3f <flotante>
+q2 - 1 > q3f <flotante>
+q2 - 2 > q3f <flotante>
+q2 - 3 > q3f <flotante>
+q2 - 4 > q3f <flotante>
+q2 - 5 > q3f <flotante>
+q2 - 6 > q3f <flotante>
+q2 - 7 > q3f <flotante>
+q2 - 8 > q3f <flotante>
+q2 - 9 > q3f <flotante>
+q3f - 0 > q3f <flotante>
+q3f - 1 > q3f <flotante>
+q3f - 2 > q3f <flotante>
+q3f - 3 > q3f <flotante>
+q3f - 4 > q3f <flotante>
+q3f - 5 > q3f <flotante>
+q3f - 6 > q3f <flotante>
+q3f - 7 > q3f <flotante>
+q3f - 8 > q3f <flotante>
+q3f - 9 > q3f <flotante>
+
+# --- exponente: flotante E|e signo digito ---
+q3f - E > q4
+q3f - e > q4
+q4 - + > q5
+q4 - - > q5
+q5 - 0 > q6f <exponente>
+q5 - 1 > q6f <exponente>
+q5 - 2 > q6f <exponente>
+q5 - 3 > q6f <exponente>
+q5 - 4 > q6f <exponente>
+q5 - 5 > q6f <exponente>
+q5 - 6 > q6f <exponente>
+q5 - 7 > q6f <exponente>
+q5 - 8 > q6f <exponente>
+q5 - 9 > q6f <exponente>
+q6f - 0 > q6f <exponente>
+q6f - 1 > q6f <exponente>
+q6f - 2 > q6f <exponente>
+q6f - 3 > q6f <exponente>
+q6f - 4 > q6f <exponente>
+q6f - 5 > q6f <exponente>
+q6f - 6 > q6f <exponente>
+q6f - 7 > q6f <exponente>
+q6f - 8 > q6f <exponente>
+q6f - 9 > q6f <exponente>
+
+# --- operadores ---
+q0s - + > q7f <suma>
+q0s - - > q8f <resta>
+q0s - * > q9f <producto>
+q0s - / > q10f <cociente>
