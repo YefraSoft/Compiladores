@@ -30,7 +30,6 @@ pub fn create(lines: &[String]) -> Result<Afd, String> {
     let mut transitions: Vec<Transition> = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
-
         if !valid_line.is_match(line) {
             return Err(format!("Syntax Error in line: {} value: {}", i, line));
         }
@@ -83,6 +82,8 @@ pub fn create(lines: &[String]) -> Result<Afd, String> {
         state_transitions.insert(transition.event, to_state);
     }
 
+    print_afd(&afd);
+
     Ok(afd)
 }
 
@@ -92,6 +93,10 @@ fn register_state(states: &mut HashMap<String, State>, state: State) {
         .and_modify(|known_state| {
             known_state.is_final |= state.is_final;
             known_state.is_start |= state.is_start;
+
+            if known_state.label.is_none() {
+                known_state.label = state.label.clone();
+            }
         })
         .or_insert(state);
 }
@@ -129,6 +134,18 @@ pub fn check(afd: &Afd, line: &String) -> Result<bool, String> {
     }
 
     Ok(state.is_final)
+}
+
+pub fn check_per_character(afd: &Afd, value: &char, state: &State) -> Result<State, String> {
+    let Some(states) = afd.get(state) else {
+        return Err("State not found".to_string());
+    };
+
+    let Some(next_state) = states.get(&value) else {
+        return Err("null".to_string());
+    };
+
+    Ok(next_state.clone())
 }
 
 fn build_state(state: &str, label: Option<&str>) -> Result<State, String> {
@@ -171,9 +188,16 @@ pub fn print_afd(afd: &Afd) {
             print!(" [FINAL]");
         }
 
+        if let Some(label) = &state.label {
+            print!(" {label}");
+        }
+
         println!();
 
         // Imprimir sus transiciones
+        let mut transitions: Vec<(&char, &State)> = transitions.iter().collect();
+        transitions.sort_by(|a, b| a.0.cmp(b.0));
+
         for (event, to_state) in transitions {
             println!("  --{}--> {}", event, to_state.name);
         }

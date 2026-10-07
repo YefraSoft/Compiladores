@@ -34,8 +34,6 @@ fn main() {
         }
     };
 
-    afd::print_afd(&afd);
-
     match afd::check(&afd, line) {
         Ok(true) => println!("Cadena aceptada."),
         Ok(false) => println!("Cadena rechazada."),
