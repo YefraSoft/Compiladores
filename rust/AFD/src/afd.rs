@@ -115,14 +115,18 @@ fn check_rules(states: &HashMap<String, State>) -> Result<(), String> {
     Ok(())
 }
 
-pub fn check(afd: &Afd, line: &String) -> Result<bool, String> {
-    let mut state = afd
-        .keys()
+pub fn start_state(afd: &Afd) -> Result<State, String> {
+    afd.keys()
         .find(|state| state.is_start)
-        .ok_or_else(|| "Afd dont have a start state.".to_string())?;
+        .cloned()
+        .ok_or_else(|| "Afd dont have a start state.".to_string())
+}
+
+pub fn check(afd: &Afd, line: &str) -> Result<bool, String> {
+    let mut state = start_state(afd)?;
 
     for character in line.chars() {
-        let Some(states) = afd.get(state) else {
+        let Some(states) = afd.get(&state) else {
             return Ok(false);
         };
 
@@ -130,7 +134,7 @@ pub fn check(afd: &Afd, line: &String) -> Result<bool, String> {
             return Ok(false);
         };
 
-        state = next_state;
+        state = next_state.clone();
     }
 
     Ok(state.is_final)

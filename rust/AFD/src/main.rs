@@ -1,6 +1,4 @@
-#[path = "Afd/Afd.rs"]
-mod afd;
-
+use afd::{check, create};
 use std::{env, fs, process};
 
 fn main() {
@@ -26,7 +24,7 @@ fn main() {
     };
     let lines: Vec<String> = content.lines().map(String::from).collect();
 
-    let afd = match afd::create(&lines) {
+    let afd = match create(&lines) {
         Ok(afd) => afd,
         Err(error) => {
             eprintln!("Error: {error}");
@@ -34,7 +32,7 @@ fn main() {
         }
     };
 
-    match afd::check(&afd, line) {
+    match check(&afd, line) {
         Ok(true) => println!("Cadena aceptada."),
         Ok(false) => println!("Cadena rechazada."),
         Err(error) => {
