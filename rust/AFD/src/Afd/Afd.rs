@@ -6,6 +6,7 @@ pub struct State {
     name: String,
     is_final: bool,
     is_start: bool,
+    label: Option<String>,
 }
 
 /*
@@ -22,21 +23,27 @@ struct Transition {
 
 pub fn create(lines: &[String]) -> Result<Afd, String> {
     let valid_line =
-        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+./-] > [qQ][0-9]+[sf]{0,2}$").unwrap();
+        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+./-] > [qQ][0-9]+[sf]{0,2}( <[a-zA-Z]+>)?$")
+            .unwrap();
 
     let mut states: HashMap<String, State> = HashMap::new();
     let mut transitions: Vec<Transition> = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
+
         if !valid_line.is_match(line) {
             return Err(format!("Syntax Error in line: {} value: {}", i, line));
         }
 
         let sections: Vec<&str> = line.split_whitespace().collect();
 
-        let from_state = build_state(sections[0])?;
+        let from_state = build_state(sections[0], None)?;
         let event = sections[2].chars().next().ok_or("Empty transition event")?;
-        let to_state = build_state(sections[4])?;
+        let to_state = if sections.len() == 6 {
+            build_state(sections[4], Some(sections[5]))?
+        } else {
+            build_state(sections[4], None)?
+        };
 
         let from_name = from_state.name.clone();
         let to_name = to_state.name.clone();
@@ -124,7 +131,7 @@ pub fn check(afd: &Afd, line: &String) -> Result<bool, String> {
     Ok(state.is_final)
 }
 
-fn build_state(state: &str) -> Result<State, String> {
+fn build_state(state: &str, label: Option<&str>) -> Result<State, String> {
     let mut name = String::new();
     let mut is_final = false;
     let mut is_start = false;
@@ -145,6 +152,7 @@ fn build_state(state: &str) -> Result<State, String> {
         name,
         is_final,
         is_start,
+        label: label.map(String::from),
     })
 }
 
