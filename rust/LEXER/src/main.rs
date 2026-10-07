@@ -37,35 +37,41 @@ fn tokens(afd: &Afd, entrada: &str) -> String {
     let mut state = start_state(afd).unwrap();
     let mut token = String::new();
     let mut result: Vec<String> = Vec::new();
+    let mut i = 0;
 
-    for c in characters {
+    while i < characters.len() {
+        let c = characters[i];
         let next = check_per_character(afd, &state, c).unwrap_or_else(|error| fail(&error));
-        let etiquette = state.label().map(str::to_string);
 
         match next {
             Some(nuevo) => {
                 state = nuevo;
                 token.push(c);
+                i += 1;
             }
             None => {
-                if let Some(etiquette) = etiquette {
-                    push_token(&mut result, &etiquette, &token);
+                if let Some(label) = state.label().map(str::to_string) {
+                    push_token(&mut result, &label, &token);
                 } else if token.is_empty() {
                     if !c.is_whitespace() {
                         push_token(&mut result, "error", &c.to_string());
                     }
+                    i += 1;
                 } else {
                     if !c.is_whitespace() {
                         token.push(c);
                     }
                     push_token(&mut result, "error", &token);
+                    i += 1;
                 }
                 token.clear();
                 state = start_state(afd).unwrap();
             }
         }
     }
-    if let Some(label) = state.label().map(str::to_string) {
+
+    if !token.is_empty() {
+        let label = state.label().unwrap_or("error").to_string();
         push_token(&mut result, &label, &token);
     }
 
