@@ -1,4 +1,4 @@
-use afd::{check, create};
+use afd::{check, create, print_afd};
 use std::{env, fs, process};
 
 fn main() {
@@ -31,6 +31,8 @@ fn main() {
             process::exit(1);
         }
     };
+
+    print_afd(&afd);
 
     match check(&afd, line) {
         Ok(true) => println!("Cadena aceptada."),
