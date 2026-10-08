@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>Jflextest</groupId>
+  <artifactId>newlexer</artifactId>
+  <version>1.0</version>
+  <packaging>jar</packaging>
+  <name>NewLexer (ejemplo JFlexFork)</name>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Jar de JFlexFork: se construye con `mvn package` en java/YLEXER -->
+    <jflex.jar>${project.basedir}/../../target/jflex-1.5.0-fork.jar</jflex.jar>
+    <generated.dir>${project.build.directory}/generated-sources/jflex</generated.dir>
+  </properties>
+
+  <build>
+    <plugins>
+      <!-- NewLexer.flex -> target/generated-sources/jflex/Jflextest/NewLexer.java -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>jflex-generate</id>
+            <phase>generate-sources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <available file="${jflex.jar}" property="jflex.jar.present"/>
+                <fail unless="jflex.jar.present"
+                      message="No existe ${jflex.jar}. Ejecuta primero: mvn -f ../../pom.xml package"/>
+                <mkdir dir="${generated.dir}/Jflextest"/>
+                <java jar="${jflex.jar}" fork="true" failonerror="true">
+                  <arg value="-q"/>
+                  <arg value="--nobak"/>
+                  <arg value="-d"/>
+                  <arg file="${generated.dir}/Jflextest"/>
+                  <arg file="${project.basedir}/src/main/java/Jflextest/NewLexer.flex"/>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>add-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources><source>${generated.dir}</source></sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest><mainClass>Jflextest.TestConsole</mainClass></manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

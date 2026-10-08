@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>de.jflex</groupId>
+  <artifactId>jflex</artifactId>
+  <version>1.5.0-fork</version>
+  <packaging>jar</packaging>
+
+  <name>JFlexFork</name>
+  <description>
+    JFlex 1.5.0 rebuilt from its original sources with a modern JDK.
+    Standalone project: no parent POM, no JFlex/CUP Maven plugins.
+  </description>
+  <url>http://jflex.de/</url>
+  <licenses>
+    <license>
+      <name>BSD</name>
+      <url>http://opensource.org/licenses/BSD-3-Clause</url>
+    </license>
+  </licenses>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <generated.dir>${project.build.directory}/generated-sources/jflex</generated.dir>
+    <bootstrap.dir>${project.basedir}/bootstrap</bootstrap.dir>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.10.15</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>jflex-${project.version}</finalName>
+    <plugins>
+      <!-- Bootstrap: the original 1.5.0 binaries generate LexParse/sym (CUP) and LexScan (JFlex). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>bootstrap-generate</id>
+            <phase>generate-sources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <mkdir dir="${generated.dir}/jflex"/>
+                <echo message="CUP: LexParse.cup -> LexParse.java, sym.java"/>
+                <java jar="${bootstrap.dir}/java-cup-11a.jar" fork="true" failonerror="true">
+                  <arg value="-interface"/>
+                  <arg value="-parser"/>
+                  <arg value="LexParse"/>
+                  <arg value="-destdir"/>
+                  <arg file="${generated.dir}/jflex"/>
+                  <arg file="${project.basedir}/src/main/cup/LexParse.cup"/>
+                </java>
+                <echo message="JFlex: LexScan.flex -> LexScan.java"/>
+                <java jar="${bootstrap.dir}/jflex-1.5.0.jar" fork="true" failonerror="true">
+                  <arg value="--nobak"/>
+                  <arg value="--skel"/>
+                  <arg file="${project.basedir}/src/main/jflex/skeleton.nested"/>
+                  <arg value="-d"/>
+                  <arg file="${generated.dir}/jflex"/>
+                  <arg file="${project.basedir}/src/main/jflex/LexScan.flex"/>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>add-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources><source>${generated.dir}</source></sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <includes>
+            <include>**/*Test.java</include>
+            <include>**/*Tests.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>jflex.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Este repositorio solo versiona codigo fuente de C++ y de Rust.
+# Este repositorio solo versiona codigo fuente de C++, Rust y Java.
 # Todo lo demas (binarios, artefactos de compilacion, proyectos de Visual
 # Studio, respaldos .zip) queda fuera del control de versiones.
 # ---------------------------------------------------------------------------
@@ -38,6 +38,25 @@
 !**/*.ron
 !*.yeff
 !**/*.yeff
+
+# Codigo fuente de Java (Maven) y especificaciones de JFlex / CUP
+!*.java
+!**/*.java
+!pom.xml
+!**/pom.xml
+!*.flex
+!**/*.flex
+!*.cup
+!**/*.cup
+!**/*.properties
+!**/skeleton.*
+
+# JFlexFork (java/YLEXER): lanzadores, licencia y jars de bootstrap
+# (los jars originales son necesarios para generar LexParse/LexScan)
+!java/YLEXER/bin/jflex
+!java/YLEXER/bin/jflex.bat
+!java/YLEXER/COPYRIGHT
+!java/YLEXER/bootstrap/*.jar
 
 # Necesario para poder re-incluir archivos dentro de carpetas ignoradas
 !*/
