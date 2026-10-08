@@ -6,6 +6,7 @@ import static Jflextest.Token.*;
 
 L = [a-z]+
 D = [0-9]+
+DEC = ([0-9]+.[0-9]+)
 white=[ \t\r\n]+
 
 %{
@@ -26,6 +27,7 @@ white=[ \t\r\n]+
 "+"	{return suma;}
 {L}	{lexeme =yytext(); return variable;}
 {D} {lexeme=yytext(); return numero; }
+{DEC} {lexeme=yytext(); return decimal; }
 [a-z]+ ([0-9]+ | [a-z]+)* {lexeme=yytext(); return ID;}
 "*"	{return multiplicacion;}
 "-" {return resta;}

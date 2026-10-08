@@ -32,6 +32,8 @@ public class TestClass {
 				 			break;
 				 case ID:
 				 case numero:
+				 case dec:
+			     case DEC:
 				 case variable: resultados+="Token:"+token+" "+ lexer.lexeme+"\n";
 				 		break;
 				 case IF:
