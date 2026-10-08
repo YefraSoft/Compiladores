@@ -1,7 +1,9 @@
 use regex::Regex;
 use std::collections::HashMap;
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+const COMMENT_PREFIXES: [&str; 2] = ["#", "//"];
+
+#[derive(Clone)]
 pub struct State {
     name: String,
     is_final: bool,
@@ -27,80 +29,64 @@ impl State {
     }
 }
 
-/*
-    restructura de trasitions, ya que sobre escribia la misma
-*/
-
-pub type Afd = HashMap<State, HashMap<char, State>>;
-
-struct Transition {
-    from_name: String,
-    event: char,
-    to_name: String,
+pub struct Afd {
+    states: HashMap<String, State>,
+    transitions: HashMap<String, HashMap<char, String>>,
 }
 
 pub fn create(lines: &[String]) -> Result<Afd, String> {
-    let valid_line =
-        Regex::new(r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+.*/-] > [qQ][0-9]+[sf]{0,2}( <[a-zA-Z]+>)?$")
-            .unwrap();
+    let valid_line = Regex::new(
+        r"^[qQ][0-9]+[sf]{0,2} - [a-zA-Z0-9+.*/-] > [qQ][0-9]+[sf]{0,2}( <[a-zA-Z]+>)?$",
+    )
+    .unwrap();
 
-    let mut states: HashMap<String, State> = HashMap::new();
-    let mut transitions: Vec<Transition> = Vec::new();
+    let mut afd = Afd {
+        states: HashMap::new(),
+        transitions: HashMap::new(),
+    };
 
     for (i, line) in lines.iter().enumerate() {
+        let line = line.trim();
+
+        if is_ignored(line) {
+            continue;
+        }
+
         if !valid_line.is_match(line) {
-            return Err(format!("Syntax Error in line: {} value: {}", i, line));
+            return Err(format!("Syntax Error in line: {} value: {}", i + 1, line));
         }
 
         let sections: Vec<&str> = line.split_whitespace().collect();
 
         let from_state = build_state(sections[0], None)?;
         let event = sections[2].chars().next().ok_or("Empty transition event")?;
-        let to_state = if sections.len() == 6 {
-            build_state(sections[4], Some(sections[5]))?
-        } else {
-            build_state(sections[4], None)?
-        };
+        let to_state = build_state(sections[4], sections.get(5).copied())?;
 
         let from_name = from_state.name.clone();
         let to_name = to_state.name.clone();
 
-        register_state(&mut states, from_state);
-        register_state(&mut states, to_state);
-        transitions.push(Transition {
-            from_name,
-            event,
-            to_name,
-        });
-    }
+        register_state(&mut afd.states, from_state);
+        register_state(&mut afd.states, to_state);
 
-    check_rules(&states)?;
+        let state_transitions =
+            afd.transitions.entry(from_name).or_default();
 
-    let mut afd: Afd = HashMap::new();
-
-    for state in states.values() {
-        afd.entry(state.clone()).or_default();
-    }
-
-    for transition in transitions {
-        let from_state = states
-            .get(&transition.from_name)
-            .ok_or("Invalid transition state")?
-            .clone();
-        let to_state = states
-            .get(&transition.to_name)
-            .ok_or("Invalid transition state")?
-            .clone();
-        let state_transitions = afd.entry(from_state).or_default();
-
-        if state_transitions.contains_key(&transition.event) {
-            return Err("Non deterministic transition.".to_string());
+        if state_transitions.insert(event, to_name).is_some() {
+            return Err(format!("Non deterministic transition in line: {}", i + 1));
         }
-
-        state_transitions.insert(transition.event, to_state);
     }
+
+    check_rules(&afd.states)?;
 
     Ok(afd)
+}
+
+pub fn is_ignored(line: &str) -> bool {
+    let line = line.trim();
+    line.is_empty()
+        || COMMENT_PREFIXES
+            .iter()
+            .any(|prefix| line.starts_with(prefix))
 }
 
 fn register_state(states: &mut HashMap<String, State>, state: State) {
@@ -132,7 +118,8 @@ fn check_rules(states: &HashMap<String, State>) -> Result<(), String> {
 }
 
 pub fn start_state(afd: &Afd) -> Result<State, String> {
-    afd.keys()
+    afd.states
+        .values()
         .find(|state| state.is_start)
         .cloned()
         .ok_or_else(|| "Afd dont have a start state.".to_string())
@@ -142,24 +129,28 @@ pub fn check(afd: &Afd, line: &str) -> Result<bool, String> {
     let mut state = start_state(afd)?;
 
     for character in line.chars() {
-        let Some(states) = afd.get(&state) else {
+        let Some(next_state) = check_per_character(afd, &state, character)? else {
             return Ok(false);
         };
 
-        let Some(next_state) = states.get(&character) else {
-            return Ok(false);
-        };
-
-        state = next_state.clone();
+        state = next_state;
     }
 
     Ok(state.is_final)
 }
 
 pub fn check_per_character(afd: &Afd, state: &State, value: char) -> Result<Option<State>, String> {
-    let states = afd.get(state).ok_or("State not found")?;
+    let Some(next_name) = afd
+        .transitions
+        .get(&state.name)
+        .and_then(|transitions| transitions.get(&value))
+    else {
+        return Ok(None);
+    };
 
-    Ok(states.get(&value).cloned())
+    let next_state = afd.states.get(next_name).ok_or("State not found")?;
+
+    Ok(Some(next_state.clone()))
 }
 
 fn build_state(state: &str, label: Option<&str>) -> Result<State, String> {
@@ -190,8 +181,10 @@ fn build_state(state: &str, label: Option<&str>) -> Result<State, String> {
 pub fn print_afd(afd: &Afd) {
     println!("========== AFD ==========");
 
-    for (state, transitions) in afd {
-        // Imprimir información del estado
+    let mut states: Vec<&State> = afd.states.values().collect();
+    states.sort_by(|a, b| a.name.cmp(&b.name));
+
+    for state in states {
         print!("{}", state.name);
 
         if state.is_start {
@@ -208,12 +201,13 @@ pub fn print_afd(afd: &Afd) {
 
         println!();
 
-        // Imprimir sus transiciones
-        let mut transitions: Vec<(&char, &State)> = transitions.iter().collect();
-        transitions.sort_by(|a, b| a.0.cmp(b.0));
+        if let Some(transitions) = afd.transitions.get(&state.name) {
+            let mut transitions: Vec<(&char, &String)> = transitions.iter().collect();
+            transitions.sort_by(|a, b| a.0.cmp(b.0));
 
-        for (event, to_state) in transitions {
-            println!("  --{}--> {}", event, to_state.name);
+            for (event, to_name) in transitions {
+                println!("  --{}--> {}", event, to_name);
+            }
         }
 
         println!();
