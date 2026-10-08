@@ -1,11 +1,11 @@
-use afd::{Afd, check_per_character, create, print_afd, start_state};
+use afd::{Afd, check_per_character, create, is_ignored, print_afd, start_state};
 use std::env;
-use std::io::{self, Read};
+use std::io::{self, BufRead, Write};
 use std::process;
 
 mod yeff;
 
-const USAGE: &str = "Uso: cargo run -- <archivo.yeff>  (la cadena se lee por stdin)";
+const USAGE: &str = "Uso: cargo run -- <archivo.yeff>";
 
 fn main() {
     let Some(arg) = env::args().nth(1) else {
@@ -16,19 +16,36 @@ fn main() {
     let path = yeff::path_from_arg(&arg);
     let lines = yeff::read(&path).unwrap_or_else(|error| fail(&error));
 
-    if lines.is_empty() {
+    if lines.iter().all(|line| is_ignored(line)) {
         fail(&format!("{path} no contiene transiciones."));
     }
 
     let afd = create(&lines).unwrap_or_else(|error| fail(&error));
     print_afd(&afd);
 
-    let input = read_stdin();
-    let entrada = input.trim();
+    println!("\nIngresa cadenas; para cerrar presiona Control + D");
+    read_inputs(&afd);
+}
 
-    println!("\nEntrada leida: {entrada}");
+fn read_inputs(afd: &Afd) {
+    let stdin = io::stdin();
+    let mut lines = stdin.lock().lines();
 
-    println!("\nTokens: {}", tokens(&afd, entrada));
+    loop {
+        print!("-> ");
+        io::stdout()
+            .flush()
+            .unwrap_or_else(|error| fail(&format!("No se pudo mostrar el indicador: {error}")));
+
+        let Some(line) = lines.next() else {
+            println!();
+            break;
+        };
+        let entrada = line.unwrap_or_else(|error| fail(&format!("No se pudo leer stdin: {error}")));
+
+        println!("\nEntrada leida: {entrada}");
+        println!("Tokens: {}\n", tokens(afd, &entrada));
+    }
 }
 
 fn tokens(afd: &Afd, entrada: &str) -> String {
@@ -41,6 +58,7 @@ fn tokens(afd: &Afd, entrada: &str) -> String {
 
     while i < characters.len() {
         let c = characters[i];
+
         let next = check_per_character(afd, &state, c).unwrap_or_else(|error| fail(&error));
 
         match next {
@@ -84,15 +102,6 @@ fn push_token(result: &mut Vec<String>, label: &str, valor: &str) {
     }
 
     result.push(format!("<{label}, {valor}>"));
-}
-
-fn read_stdin() -> String {
-    let mut input = String::new();
-    io::stdin()
-        .read_to_string(&mut input)
-        .unwrap_or_else(|error| fail(&format!("No se pudo leer stdin: {error}")));
-
-    input
 }
 
 fn fail(error: &str) -> ! {

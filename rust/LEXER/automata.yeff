@@ -9,8 +9,8 @@ q0s - 8 > q1f <entero>
 q0s - 9 > q1f <entero>
 q0s - 0 > q1f <entero>
 
-q0s - + > q11f <incremento>
-q11f - + > q11f <incremento>
+q0s - + > q11f <suma>
+q11f - + > q12f <incremento>
 
 q1f - 1 > q1f <entero>
 q1f - 2 > q1f <entero>
